@@ -68,6 +68,11 @@ public class PlayerContoller : MonoBehaviour
         {
             attackTimer -= Time.deltaTime;
         }
+
+        if (Input.GetKeyDown(KeyCode.L))
+        {
+            Interact();
+        }
     }
     #endregion
 
@@ -177,7 +182,24 @@ public class PlayerContoller : MonoBehaviour
     private void Die()
     {
         Destroy(this.gameObject);
+        GameObject gm = GameObject.FindWithTag("GameController");
+        gm.GetComponent<GameManager>().LoseGame();
     }
 
+    #endregion
+
+    #region Interact_functions
+
+    private void Interact()
+    {
+        RaycastHit2D[] hits = Physics2D.BoxCastAll(PlayerRB.position + currDirection, new Vector2(0.5f, 0.5f), 0f, Vector2.zero, 0f);
+        foreach(RaycastHit2D hit in hits)
+        {
+            if (hit.transform.CompareTag("Chest"))
+            {
+                hit.transform.GetComponent<chest>().Interact();
+            }
+        }
+    }
     #endregion
 }
