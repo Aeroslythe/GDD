@@ -9,6 +9,10 @@ public class PlayerContoller : MonoBehaviour
     public float movespeed;
     float x_input;
     float y_input;
+    Vector2 upRight = new Vector2(0.5f, 0.5f);
+    Vector2 upLeft = new Vector2(-0.5f, 0.5f);
+    Vector2 downRight = new Vector2(0.5f, -0.5f);
+    Vector2 downLeft = new Vector2(-0.5f, -0.5f);
     #endregion
 
     #region Physics_components
@@ -25,6 +29,13 @@ public class PlayerContoller : MonoBehaviour
     Vector2 currDirection;
     #endregion
 
+    #region Ability_variables
+    float cloakTiming = 1;
+    bool isCloaked;
+    bool isTransitioning;
+    bool isDashing;
+    #endregion
+
     #region Health_variables
     public float maxHealth;
     float currHealth;
@@ -33,6 +44,7 @@ public class PlayerContoller : MonoBehaviour
 
     #region Animation_Components
     Animator anim;
+    SpriteRenderer sprite; 
     #endregion
 
     #region Utility_functions
@@ -40,6 +52,9 @@ public class PlayerContoller : MonoBehaviour
     {
         PlayerRB = GetComponent<Rigidbody2D>();
 
+        isTransitioning = false;
+
+        sprite = GetComponent<SpriteRenderer>();
         attackTimer = 0;
 
         anim = GetComponent<Animator>();
@@ -47,6 +62,8 @@ public class PlayerContoller : MonoBehaviour
         currHealth = maxHealth;
 
         HPSlider.value = currHealth / maxHealth;
+
+        isCloaked = false;
     }
 
     private void Update()
@@ -57,8 +74,6 @@ public class PlayerContoller : MonoBehaviour
         }
         x_input = Input.GetAxisRaw("Horizontal");
         y_input = Input.GetAxisRaw("Vertical");
-
-        Move();
 
         if (Input.GetKeyDown(KeyCode.J) && attackTimer <= 0)
         {
@@ -73,39 +88,113 @@ public class PlayerContoller : MonoBehaviour
         {
             Interact();
         }
+
+        if(Input.GetKeyDown(KeyCode.LeftShift))
+        {
+            if (isTransitioning)
+            {
+                return;
+            }
+            Dash();
+        }
+
+        if (Input.GetKeyDown(KeyCode.I))
+        {
+            if (isTransitioning)
+            {
+                return;
+            }
+            if (!isCloaked)
+            {
+                Cloak();
+            } else
+            {
+                deCloak();
+            }
+        }
+
+        Move();
     }
     #endregion
 
     #region Movement_functions
+    private void Dash()
+    {
+        StartCoroutine(DashRoutine());
+    }
+
+    IEnumerator DashRoutine()
+    {
+        isTransitioning = true;
+        movespeed *= 2;
+        Debug.Log("Dashing now");
+        for (int i = 0; i < 3; i++)
+        {
+            yield return new WaitForSeconds(0.1f);
+        }
+        movespeed = movespeed / 2;
+        isTransitioning = false;
+        Debug.Log("Done dashing");
+        yield return null;
+    }
 
     private void Move()
     {
         anim.SetBool("Moving", true);
 
-        if(x_input > 0)
+        if (x_input > 0 && y_input > 0)
+        {
+            PlayerRB.velocity = upRight * movespeed;
+            currDirection = Vector2.up;
+        } else
+        if (x_input < 0 && y_input > 0)
+        {
+            PlayerRB.velocity = upLeft * movespeed;
+            currDirection = Vector2.up;
+        }
+        else
+        if (x_input > 0 && y_input < 0)
+        {
+            PlayerRB.velocity = downRight * movespeed;
+            currDirection = Vector2.down;
+        }
+        else
+        if (x_input < 0 && y_input < 0)
+        {
+            PlayerRB.velocity = downLeft * movespeed;
+            currDirection = Vector2.down;
+        }
+        else
+        if (x_input > 0)
         {
             PlayerRB.velocity = Vector2.right * movespeed;
             currDirection = Vector2.right;
         }
-        else if (x_input < 0)
+        else
+        if (x_input < 0)
         {
             PlayerRB.velocity = Vector2.left * movespeed;
             currDirection = Vector2.left;
         }
-        else if (y_input > 0)
+        else
+        if (y_input > 0)
         {
             PlayerRB.velocity = Vector2.up * movespeed;
             currDirection = Vector2.up;
         }
-        else if (y_input < 0)
+        else
+        if (y_input < 0)
         {
             PlayerRB.velocity = Vector2.down * movespeed;
             currDirection = Vector2.down;
-        } else
+        }
+        else
+        if (x_input == 0 && y_input == 0)
         {
             PlayerRB.velocity = Vector2.zero;
             anim.SetBool("Moving", false);
         }
+
 
         anim.SetFloat("DirX", currDirection.x);
         anim.SetFloat("DirY", currDirection.y);
@@ -113,7 +202,6 @@ public class PlayerContoller : MonoBehaviour
     #endregion
 
     #region Attack_functions
-
     private void Attack()
     {
         Debug.Log("Attacking now");
@@ -152,9 +240,71 @@ public class PlayerContoller : MonoBehaviour
     }
     #endregion
 
+    #region Ability_functions
+    private void Cloak()
+    {
+        Debug.Log("Cloaking now");
+        // handels animations and tags
+        StartCoroutine(CloakRoutine());
+    }
+
+    IEnumerator CloakRoutine()
+    {
+        //FindObjectOfType<AudioManager>().Play("PlayerAttack");
+        float r = 1f;
+        float g = 1f;
+        float a = 1f;
+        isTransitioning = true;
+        for (int i = 0; i < 9; i++)
+        {
+            //yield return new WaitForSeconds(1);
+            r -= .1f;
+            g -= .1f;
+            a -= .1f;
+            yield return new WaitForSeconds(0.1f);
+            Debug.Log(sprite.color);
+            sprite.material.color = new Color(r, g, 1f, a);
+        }
+        isCloaked = true;
+        isTransitioning = false;
+        gameObject.tag = "Invisible"; 
+        yield return null;
+    }
+
+    private void deCloak()
+    {
+        Debug.Log("decloaking now");
+        // handels animations and tags
+        StartCoroutine(deCloakRoutine());
+    }
+
+    IEnumerator deCloakRoutine()
+    {
+        //FindObjectOfType<AudioManager>().Play("PlayerAttack");
+        float r = 0f;
+        float g = 0f;
+        float a = 0f;
+        isTransitioning = true;
+        for (int i = 0; i < 9; i++)
+        {
+            //yield return new WaitForSeconds(1);
+            r += .1f;
+            g += .1f;
+            a += .1f;
+            yield return new WaitForSeconds(0.1f);
+            Debug.Log(sprite.color);
+            sprite.material.color = new Color(r, g, 1f, a);
+        }
+        yield return null;
+        isCloaked = false;
+        isTransitioning = false;
+        gameObject.tag = "Player";
+    }
+        #endregion
+
     #region Health_functions
 
-    public void TakeDamage(float value)
+        public void TakeDamage(float value)
     {
         FindObjectOfType<AudioManager>().Play("PlayerHurt");
 

@@ -10,6 +10,7 @@ public class EnemyController : MonoBehaviour
 
     #region Physics_components
     Rigidbody2D EnemyRB;
+    CircleCollider2D Collision;
     #endregion
 
     #region Targeting_variables
@@ -35,7 +36,11 @@ public class EnemyController : MonoBehaviour
     {
         EnemyRB = GetComponent<Rigidbody2D>();
 
+        Collision = GetComponent<CircleCollider2D>();
+
         currHealth = maxHealth;
+
+        Collision.enabled = false;
     }
 
     //runs once every frame
@@ -47,7 +52,13 @@ public class EnemyController : MonoBehaviour
         {
             return;
         }
-
+        if (player.transform.CompareTag("Invisible"))
+        {
+            EnemyRB.velocity = new Vector2(0f, 0f);
+            Collision.enabled = false;
+            return;
+        }
+        Collision.enabled = true;
         Move();
     }
 

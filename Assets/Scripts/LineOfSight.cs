@@ -7,7 +7,7 @@ public class LineOfSight : MonoBehaviour
     //called when something enters the trigger collider
     private void OnTriggerEnter2D(Collider2D collision)
     {
-        if (collision.CompareTag("Player"))
+        if (collision.CompareTag("Player") || collision.CompareTag("Invisible"))
         {
             GetComponentInParent<EnemyController>().player = collision.transform;
             Debug.Log("SEE PLAYER => RUN AT PLAYER");

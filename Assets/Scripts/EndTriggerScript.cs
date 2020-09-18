@@ -7,7 +7,7 @@ public class EndTriggerScript : MonoBehaviour
 
     private void OnTriggerEnter2D(Collider2D coll)
     {
-        if (coll.CompareTag("Player"))
+        if (coll.CompareTag("Player") || coll.CompareTag("Invisible"))
         {
             GameObject gm = GameObject.FindWithTag("GameController");
             gm.GetComponent<GameManager>().WinGame();
